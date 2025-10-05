@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolut TAVR Sizing</title>
+    <title>TAVR Sizing Calculator</title>
     <style>
         * {
             margin: 0;
@@ -64,18 +64,23 @@
             margin-bottom: 8px;
         }
         
-        input[type="number"] {
+        select, input[type="number"] {
             width: 100%;
             padding: 15px;
-            font-size: 18px;
+            font-size: 16px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             transition: border-color 0.3s;
+            background: white;
         }
         
-        input[type="number"]:focus {
+        select:focus, input[type="number"]:focus {
             outline: none;
             border-color: #667eea;
+        }
+        
+        .valve-selector {
+            margin-bottom: 20px;
         }
         
         .calculate-btn {
@@ -271,12 +276,20 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Evolut TAVR Sizing</h1>
-            <p>Self-Expanding Valve Calculator</p>
+            <h1>TAVR Sizing Calculator</h1>
+            <p>Multi-Platform Valve Sizing Tool</p>
         </div>
         
         <div class="content">
             <div class="input-section">
+                <div class="valve-selector">
+                    <label for="valveType">Valve Platform</label>
+                    <select id="valveType" onchange="updateValveType()">
+                        <option value="evolut">Medtronic Evolut FX+</option>
+                        <option value="navitor">Abbott Navitor</option>
+                    </select>
+                </div>
+                
                 <label for="perimeter">Annular Perimeter (mm)</label>
                 <input type="number" id="perimeter" placeholder="Enter perimeter..." step="0.1" min="50" max="100">
                 <button class="calculate-btn" onclick="calculate()">Calculate Sizing</button>
@@ -297,7 +310,7 @@
                 </table>
                 
                 <div class="details">
-                    <div class="details-title" id="detailsTitle">Evolut FX+ Sizing Details</div>
+                    <div class="details-title" id="detailsTitle">Sizing Details</div>
                     <div class="detail-row">
                         <span class="detail-label">Input Perimeter:</span>
                         <span class="detail-value" id="inputPerimeter">-</span>
@@ -322,23 +335,30 @@
                         <span class="detail-label">SOV Diameter (mean):</span>
                         <span class="detail-value" id="sovDiameter">-</span>
                     </div>
-                    <div class="detail-row" id="sovHeightRow">
+                    <div class="detail-row" id="sovHeightRow" style="display: none;">
                         <span class="detail-label">SOV Height (mean):</span>
                         <span class="detail-value" id="sovHeight">-</span>
                     </div>
-                    <div class="detail-row" id="postdilCompliantRow" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                    <div class="detail-row" id="ascAortaRow" style="display: none;">
+                        <span class="detail-label">Ascending Aorta Diameter:</span>
+                        <span class="detail-value" id="ascAorta">-</span>
+                    </div>
+                    <div class="detail-row" id="postdilCompliantRow" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; display: none;">
                         <span class="detail-label">Post-Dilatation Balloon Max Size (C/SC):</span>
                         <span class="detail-value" id="postdilCompliant">-</span>
                     </div>
-                    <div class="detail-row" id="postdilNonCompliantRow">
+                    <div class="detail-row" id="postdilNonCompliantRow" style="display: none;">
                         <span class="detail-label">Post-Dilatation Balloon Max Size (NC):</span>
                         <span class="detail-value" id="postdilNonCompliant">-</span>
                     </div>
                 </div>
                 
                 <div class="disclaimer">
-                    <strong>⚠️ Reference Tool Only</strong><br>
-                    This calculator is for reference purposes only and should not replace clinical judgment, manufacturer IFU guidelines, or heart team discussion. Always verify sizing with official Medtronic resources.
+                    <strong>⚠️ Educational Tool Only</strong><br>
+                    This calculator is for educational purposes only and should not replace medical judgment or manufacturer IFU.<br><br>
+                    
+                    <!--<strong>Data Sources:</strong> Manufacturer IFUs. Navitor SOV diameter requirement follows official guideline (valve size + 2mm).-->
+
                 </div>
                 
                 <div class="reference-section">
@@ -347,63 +367,9 @@
                     </button>
                     
                     <div class="reference-table-container" id="referenceTable" style="display: none;">
-                        <h3 style="margin-bottom: 15px; color: #333;">Evolut FX+ Complete Sizing Reference</h3>
+                        <h3 style="margin-bottom: 15px; color: #333;" id="referenceTableTitle">Complete Sizing Reference</h3>
                         <div style="overflow-x: auto;">
-                            <table class="reference-table">
-                                <thead>
-                                    <tr>
-                                        <th>Valve Size</th>
-                                        <th>Annulus Diameter</th>
-                                        <th>Perimeter</th>
-                                        <th>Oversizing Range</th>
-                                        <th>SOV Diameter</th>
-                                        <th>SOV Height</th>
-                                        <th>Max Balloon (C/SC)</th>
-                                        <th>Max Balloon (NC)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><strong>23 mm</strong></td>
-                                        <td>18-20 mm</td>
-                                        <td>56.5-62.8 mm</td>
-                                        <td>15.0-27.8%</td>
-                                        <td>≥25 mm</td>
-                                        <td>≥15 mm</td>
-                                        <td>20 mm</td>
-                                        <td>19 mm</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>26 mm</strong></td>
-                                        <td>20-23 mm</td>
-                                        <td>62.8-72.3 mm</td>
-                                        <td>13.0-30.0%</td>
-                                        <td>≥27 mm</td>
-                                        <td>≥15 mm</td>
-                                        <td>26 mm</td>
-                                        <td>25 mm</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>29 mm</strong></td>
-                                        <td>23-26 mm</td>
-                                        <td>72.3-81.7 mm</td>
-                                        <td>11.5-26.1%</td>
-                                        <td>≥29 mm</td>
-                                        <td>≥15 mm</td>
-                                        <td>25 mm</td>
-                                        <td>23 mm</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>34 mm</strong></td>
-                                        <td>26-30 mm</td>
-                                        <td>81.7-94.2 mm</td>
-                                        <td>13.3-30.8%</td>
-                                        <td>≥31 mm</td>
-                                        <td>≥16 mm</td>
-                                        <td>28 mm</td>
-                                        <td>25 mm</td>
-                                    </tr>
-                                </tbody>
+                            <table class="reference-table" id="referenceTableContent">
                             </table>
                         </div>
                     </div>
@@ -413,18 +379,39 @@
     </div>
     
     <div class="footer">
-        TAVR Sizing Calculator • Evolut Platform<br>
-        Not for medical decision making
+        TAVR Sizing Calculator<br>
+        Not for medical use - educational purposes only
     </div>
     
     <script>
-        // Evolut platform sizing data (official from Medtronic IFU)
-        const valveSizes = [
+        // Evolut FX+ sizing data (official from Medtronic IFU)
+        const evolutSizes = [
             { size: 23, minPerimeter: 56.5, maxPerimeter: 62.8, minDiameter: 18, maxDiameter: 20, sovDiameter: 25, sovHeight: 15, maxBalloonCompliant: 20, maxBalloonNonCompliant: 19 },
             { size: 26, minPerimeter: 62.8, maxPerimeter: 72.3, minDiameter: 20, maxDiameter: 23, sovDiameter: 27, sovHeight: 15, maxBalloonCompliant: 23, maxBalloonNonCompliant: 22 },
             { size: 29, minPerimeter: 72.3, maxPerimeter: 81.7, minDiameter: 23, maxDiameter: 26, sovDiameter: 29, sovHeight: 15, maxBalloonCompliant: 25, maxBalloonNonCompliant: 23 },
             { size: 34, minPerimeter: 81.7, maxPerimeter: 94.2, minDiameter: 26, maxDiameter: 30, sovDiameter: 31, sovHeight: 16, maxBalloonCompliant: 28, maxBalloonNonCompliant: 25 }
         ];
+        
+        // Abbott Navitor sizing data (from official IFU)
+        // SOV diameter requirement: valve size + 2mm (official specification)
+        // Ascending aorta diameters from official IFU (35mm valve data not available)
+        const navitorSizes = [
+            { size: 23, minPerimeter: 60.0, maxPerimeter: 66.0, minDiameter: 19, maxDiameter: 21, sovDiameter: 25, minAscAorta: 26, maxAscAorta: 36 },
+            { size: 25, minPerimeter: 66.0, maxPerimeter: 73.0, minDiameter: 21, maxDiameter: 23, sovDiameter: 27, minAscAorta: 28, maxAscAorta: 38 },
+            { size: 27, minPerimeter: 72.0, maxPerimeter: 79.0, minDiameter: 23, maxDiameter: 25, sovDiameter: 29, minAscAorta: 30, maxAscAorta: 40 },
+            { size: 29, minPerimeter: 79.0, maxPerimeter: 85.0, minDiameter: 25, maxDiameter: 27, sovDiameter: 31, minAscAorta: 32, maxAscAorta: 42 },
+            { size: 35, minPerimeter: 85.0, maxPerimeter: 95.0, minDiameter: 27, maxDiameter: 30, sovDiameter: 37, minAscAorta: null, maxAscAorta: null }
+        ];
+        
+        let currentValveSizes = evolutSizes;
+        
+        function updateValveType() {
+            const valveType = document.getElementById('valveType').value;
+            currentValveSizes = valveType === 'evolut' ? evolutSizes : navitorSizes;
+            
+            // Hide results when switching valve types
+            document.getElementById('results').classList.remove('show');
+        }
         
         function calculate() {
             const perimeter = parseFloat(document.getElementById('perimeter').value);
@@ -438,7 +425,7 @@
             const derivedDiameter = Math.round((perimeter / Math.PI) * 10) / 10;
             
             // Calculate oversizing for each valve (diameter-based)
-            const results = valveSizes.map(valve => {
+            const results = currentValveSizes.map(valve => {
                 const oversizing = ((valve.size - derivedDiameter) / derivedDiameter) * 100;
                 const isRecommended = perimeter >= valve.minPerimeter && perimeter <= valve.maxPerimeter;
                 
@@ -481,6 +468,16 @@
             });
             
             // Update details
+            const valveType = document.getElementById('valveType').value;
+            const valveName = valveType === 'evolut' ? 'Evolut FX+' : 'Abbott Navitor';
+            const isNavitor = valveType === 'navitor';
+            
+            // Show/hide fields based on valve type
+            document.getElementById('sovHeightRow').style.display = isNavitor ? 'none' : 'flex';
+            document.getElementById('ascAortaRow').style.display = isNavitor ? 'flex' : 'none';
+            document.getElementById('postdilCompliantRow').style.display = isNavitor ? 'none' : 'flex';
+            document.getElementById('postdilNonCompliantRow').style.display = isNavitor ? 'none' : 'flex';
+            
             document.getElementById('inputPerimeter').textContent = `${perimeter.toFixed(1)} mm`;
             document.getElementById('derivedDiameter').textContent = `${derivedDiameter.toFixed(1)} mm`;
             
@@ -488,9 +485,9 @@
             if (recommendedValves.length > 0) {
                 // Show range for first recommended valve (typically only one)
                 const valve = recommendedValves[0];
-                const valveData = valveSizes.find(v => v.size === valve.size);
+                const valveData = currentValveSizes.find(v => v.size === valve.size);
                 
-                document.getElementById('detailsTitle').textContent = `Evolut FX+ ${valve.size} mm`;
+                document.getElementById('detailsTitle').textContent = `${valveName} ${valve.size} mm`;
                 document.getElementById('annulusRange').textContent = 
                     `${valveData.minDiameter}-${valveData.maxDiameter} mm`;
                 document.getElementById('perimeterRange').textContent = 
@@ -499,22 +496,43 @@
                     `${valve.minOversizing.toFixed(1)}-${valve.maxOversizing.toFixed(1)}%`;
                 document.getElementById('sovDiameter').textContent = 
                     `≥${valveData.sovDiameter} mm`;
-                document.getElementById('sovHeight').textContent = 
-                    `≥${valveData.sovHeight} mm`;
-                document.getElementById('postdilCompliant').textContent = 
-                    `${valveData.maxBalloonCompliant} mm`;
-                document.getElementById('postdilNonCompliant').textContent = 
-                    `${valveData.maxBalloonNonCompliant} mm`;
+                
+                // Conditional fields based on valve type
+                if (isNavitor) {
+                    // Navitor-specific fields
+                    if (valveData.minAscAorta && valveData.maxAscAorta) {
+                        document.getElementById('ascAorta').textContent = 
+                            `${valveData.minAscAorta}-${valveData.maxAscAorta} mm`;
+                    } else {
+                        document.getElementById('ascAorta').textContent = 'Not specified';
+                    }
+                } else {
+                    // Evolut-specific fields
+                    document.getElementById('sovHeight').textContent = 
+                        `≥${valveData.sovHeight} mm`;
+                    document.getElementById('postdilCompliant').textContent = 
+                        `${valveData.maxBalloonCompliant} mm`;
+                    document.getElementById('postdilNonCompliant').textContent = 
+                        `${valveData.maxBalloonNonCompliant} mm`;
+                }
             } else {
-                document.getElementById('detailsTitle').textContent = 'Evolut FX+ Sizing Details';
+                document.getElementById('detailsTitle').textContent = `${valveName} Sizing Details`;
                 document.getElementById('annulusRange').textContent = '-';
                 document.getElementById('perimeterRange').textContent = '-';
                 document.getElementById('recommendedOversizing').textContent = 'No valve in recommended range';
                 document.getElementById('sovDiameter').textContent = '-';
-                document.getElementById('sovHeight').textContent = '-';
-                document.getElementById('postdilCompliant').textContent = '-';
-                document.getElementById('postdilNonCompliant').textContent = '-';
+                
+                if (isNavitor) {
+                    document.getElementById('ascAorta').textContent = '-';
+                } else {
+                    document.getElementById('sovHeight').textContent = '-';
+                    document.getElementById('postdilCompliant').textContent = '-';
+                    document.getElementById('postdilNonCompliant').textContent = '-';
+                }
             }
+            
+            // Update reference table title
+            document.getElementById('referenceTableTitle').textContent = `${valveName} Complete Sizing Reference`;
             
             // Show results
             document.getElementById('results').classList.add('show');
@@ -536,12 +554,75 @@
             const toggleText = document.getElementById('referenceToggleText');
             
             if (table.style.display === 'none') {
+                // Generate reference table based on current valve type
+                generateReferenceTable();
                 table.style.display = 'block';
                 toggleText.textContent = 'Hide Complete Sizing Reference';
             } else {
                 table.style.display = 'none';
                 toggleText.textContent = 'Show Complete Sizing Reference';
             }
+        }
+        
+        function generateReferenceTable() {
+            const valveType = document.getElementById('valveType').value;
+            const tableContent = document.getElementById('referenceTableContent');
+            const isNavitor = valveType === 'navitor';
+            
+            let html = `
+                <thead>
+                    <tr>
+                        <th>Valve Size</th>
+                        <th>Annulus Diameter</th>
+                        <th>Perimeter</th>
+                        <th>Oversizing Range</th>
+                        <th>SOV Diameter</th>`;
+            
+            if (isNavitor) {
+                html += `<th>Ascending Aorta</th>`;
+            } else {
+                html += `
+                        <th>SOV Height</th>
+                        <th>Max Balloon (C/SC)</th>
+                        <th>Max Balloon (NC)</th>`;
+            }
+            
+            html += `
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            currentValveSizes.forEach(valve => {
+                const minOversizing = ((valve.size - valve.maxDiameter) / valve.maxDiameter) * 100;
+                const maxOversizing = ((valve.size - valve.minDiameter) / valve.minDiameter) * 100;
+                
+                html += `
+                    <tr>
+                        <td><strong>${valve.size} mm</strong></td>
+                        <td>${valve.minDiameter}-${valve.maxDiameter} mm</td>
+                        <td>${valve.minPerimeter.toFixed(1)}-${valve.maxPerimeter.toFixed(1)} mm</td>
+                        <td>${minOversizing.toFixed(1)}-${maxOversizing.toFixed(1)}%</td>
+                        <td>≥${valve.sovDiameter} mm</td>`;
+                
+                if (isNavitor) {
+                    if (valve.minAscAorta && valve.maxAscAorta) {
+                        html += `<td>${valve.minAscAorta}-${valve.maxAscAorta} mm</td>`;
+                    } else {
+                        html += `<td>Not specified</td>`;
+                    }
+                } else {
+                    html += `
+                        <td>≥${valve.sovHeight} mm</td>
+                        <td>${valve.maxBalloonCompliant} mm</td>
+                        <td>${valve.maxBalloonNonCompliant} mm</td>`;
+                }
+                
+                html += `</tr>`;
+            });
+            
+            html += '</tbody>';
+            tableContent.innerHTML = html;
         }
     </script>
 </body>

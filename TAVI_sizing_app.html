@@ -287,11 +287,12 @@
                     <select id="valveType" onchange="updateValveType()">
                         <option value="evolut">Medtronic Evolut FX+</option>
                         <option value="navitor">Abbott Navitor</option>
+                        <option value="sapien">Edwards SAPIEN 3 Ultra RESILIA</option>
                     </select>
                 </div>
                 
-                <label for="perimeter">Annular Perimeter (mm)</label>
-                <input type="number" id="perimeter" placeholder="Enter perimeter..." step="0.1" min="50" max="100">
+                <label for="perimeter" id="measurementLabel">Annular Perimeter (mm)</label>
+                <input type="number" id="perimeter" placeholder="Enter perimeter..." step="0.1" min="50" max="700">
                 <button class="calculate-btn" onclick="calculate()">Calculate Sizing</button>
             </div>
             
@@ -358,7 +359,6 @@
                     This calculator is for educational purposes only and should not replace medical judgment or manufacturer IFU.<br><br>
                     
                     <!--<strong>Data Sources:</strong> Manufacturer IFUs. Navitor SOV diameter requirement follows official guideline (valve size + 2mm).-->
-
                 </div>
                 
                 <div class="reference-section">
@@ -403,50 +403,120 @@
             { size: 35, minPerimeter: 85.0, maxPerimeter: 95.0, minDiameter: 27, maxDiameter: 30, sovDiameter: 37, minAscAorta: null, maxAscAorta: null }
         ];
         
+        // Edwards SAPIEN 3 Ultra RESILIA sizing data (from official IFU)
+        // Uses annular AREA instead of perimeter
+        const sapienSizes = [
+            { size: 20, minArea: 273, maxArea: 345, minDiameter: 18.6, maxDiameter: 21.0 },
+            { size: 23, minArea: 338, maxArea: 430, minDiameter: 20.7, maxDiameter: 23.4 },
+            { size: 26, minArea: 430, maxArea: 546, minDiameter: 23.4, maxDiameter: 26.4 },
+            { size: 29, minArea: 540, maxArea: 683, minDiameter: 26.2, maxDiameter: 29.5 }
+        ];
+        
         let currentValveSizes = evolutSizes;
+        let measurementType = 'perimeter'; // 'perimeter' or 'area'
         
         function updateValveType() {
             const valveType = document.getElementById('valveType').value;
-            currentValveSizes = valveType === 'evolut' ? evolutSizes : navitorSizes;
+            const measurementLabel = document.getElementById('measurementLabel');
+            const measurementInput = document.getElementById('perimeter');
             
-            // Hide results when switching valve types
+            if (valveType === 'evolut') {
+                currentValveSizes = evolutSizes;
+                measurementType = 'perimeter';
+                measurementLabel.textContent = 'Annular Perimeter (mm)';
+                measurementInput.placeholder = 'Enter perimeter...';
+                measurementInput.min = '50';
+                measurementInput.max = '100';
+            } else if (valveType === 'navitor') {
+                currentValveSizes = navitorSizes;
+                measurementType = 'perimeter';
+                measurementLabel.textContent = 'Annular Perimeter (mm)';
+                measurementInput.placeholder = 'Enter perimeter...';
+                measurementInput.min = '50';
+                measurementInput.max = '100';
+            } else if (valveType === 'sapien') {
+                currentValveSizes = sapienSizes;
+                measurementType = 'area';
+                measurementLabel.textContent = 'Annular Area (mm²)';
+                measurementInput.placeholder = 'Enter area...';
+                measurementInput.min = '250';
+                measurementInput.max = '700';
+            }
+            
+            // Clear input and hide results when switching valve types
+            measurementInput.value = '';
             document.getElementById('results').classList.remove('show');
         }
         
         function calculate() {
-            const perimeter = parseFloat(document.getElementById('perimeter').value);
+            const inputValue = parseFloat(document.getElementById('perimeter').value);
             
-            if (!perimeter || perimeter < 50 || perimeter > 100) {
-                alert('Please enter a valid perimeter between 50 and 100 mm');
-                return;
+            // Validate input based on measurement type
+            if (measurementType === 'perimeter') {
+                if (!inputValue || inputValue < 50 || inputValue > 100) {
+                    alert('Please enter a valid perimeter between 50 and 100 mm');
+                    return;
+                }
+            } else { // area
+                if (!inputValue || inputValue < 250 || inputValue > 700) {
+                    alert('Please enter a valid area between 250 and 700 mm²');
+                    return;
+                }
             }
             
-            // Calculate derived diameter and round to 1 decimal for consistency
-            const derivedDiameter = Math.round((perimeter / Math.PI) * 10) / 10;
+            let derivedDiameter;
+            let results;
             
-            // Calculate oversizing for each valve (diameter-based)
-            const results = currentValveSizes.map(valve => {
-                const oversizing = ((valve.size - derivedDiameter) / derivedDiameter) * 100;
-                const isRecommended = perimeter >= valve.minPerimeter && perimeter <= valve.maxPerimeter;
+            if (measurementType === 'perimeter') {
+                // Perimeter-based calculation (Evolut, Navitor)
+                derivedDiameter = Math.round((inputValue / Math.PI) * 10) / 10;
                 
-                // Calculate target oversizing range for this valve
-                const minOversizing = ((valve.size - valve.maxDiameter) / valve.maxDiameter) * 100;
-                const maxOversizing = ((valve.size - valve.minDiameter) / valve.minDiameter) * 100;
+                // Calculate oversizing for each valve (diameter-based)
+                results = currentValveSizes.map(valve => {
+                    const oversizing = ((valve.size - derivedDiameter) / derivedDiameter) * 100;
+                    const isRecommended = inputValue >= valve.minPerimeter && inputValue <= valve.maxPerimeter;
+                    
+                    // Calculate target oversizing range for this valve
+                    const minOversizing = ((valve.size - valve.maxDiameter) / valve.maxDiameter) * 100;
+                    const maxOversizing = ((valve.size - valve.minDiameter) / valve.minDiameter) * 100;
+                    
+                    return {
+                        size: valve.size,
+                        oversizing: oversizing,
+                        minOversizing: minOversizing,
+                        maxOversizing: maxOversizing,
+                        isRecommended: isRecommended
+                    };
+                });
+            } else {
+                // Area-based calculation (SAPIEN)
+                // Calculate area-derived diameter: diameter = 2 * sqrt(area / π)
+                derivedDiameter = Math.round((2 * Math.sqrt(inputValue / Math.PI)) * 10) / 10;
                 
-                return {
-                    size: valve.size,
-                    oversizing: oversizing,
-                    minOversizing: minOversizing,
-                    maxOversizing: maxOversizing,
-                    isRecommended: isRecommended
-                };
-            });
+                // Calculate oversizing for each valve (diameter-based)
+                results = currentValveSizes.map(valve => {
+                    const oversizing = ((valve.size - derivedDiameter) / derivedDiameter) * 100;
+                    const isRecommended = inputValue >= valve.minArea && inputValue <= valve.maxArea;
+                    
+                    // Calculate target oversizing range for this valve
+                    const minOversizing = ((valve.size - valve.maxDiameter) / valve.maxDiameter) * 100;
+                    const maxOversizing = ((valve.size - valve.minDiameter) / valve.minDiameter) * 100;
+                    
+                    return {
+                        size: valve.size,
+                        oversizing: oversizing,
+                        minOversizing: minOversizing,
+                        maxOversizing: maxOversizing,
+                        isRecommended: isRecommended
+                    };
+                });
+            }
             
             // Display results
-            displayResults(results, perimeter, derivedDiameter);
+            displayResults(results, inputValue, derivedDiameter);
         }
         
-        function displayResults(results, perimeter, derivedDiameter) {
+        function displayResults(results, inputValue, derivedDiameter) {
             const tbody = document.getElementById('valveTableBody');
             tbody.innerHTML = '';
             
@@ -469,16 +539,36 @@
             
             // Update details
             const valveType = document.getElementById('valveType').value;
-            const valveName = valveType === 'evolut' ? 'Evolut FX+' : 'Abbott Navitor';
+            let valveName;
+            if (valveType === 'evolut') {
+                valveName = 'Evolut FX+';
+            } else if (valveType === 'navitor') {
+                valveName = 'Abbott Navitor';
+            } else {
+                valveName = 'SAPIEN 3 Ultra RESILIA';
+            }
+            
             const isNavitor = valveType === 'navitor';
+            const isSapien = valveType === 'sapien';
             
             // Show/hide fields based on valve type
-            document.getElementById('sovHeightRow').style.display = isNavitor ? 'none' : 'flex';
+            document.getElementById('sovHeightRow').style.display = (valveType === 'evolut') ? 'flex' : 'none';
             document.getElementById('ascAortaRow').style.display = isNavitor ? 'flex' : 'none';
-            document.getElementById('postdilCompliantRow').style.display = isNavitor ? 'none' : 'flex';
-            document.getElementById('postdilNonCompliantRow').style.display = isNavitor ? 'none' : 'flex';
+            document.getElementById('postdilCompliantRow').style.display = (valveType === 'evolut') ? 'flex' : 'none';
+            document.getElementById('postdilNonCompliantRow').style.display = (valveType === 'evolut') ? 'flex' : 'none';
+            document.getElementById('sovDiameterRow').style.display = isSapien ? 'none' : 'flex';
             
-            document.getElementById('inputPerimeter').textContent = `${perimeter.toFixed(1)} mm`;
+            // Update input display (perimeter vs area)
+            if (measurementType === 'perimeter') {
+                document.getElementById('inputPerimeter').parentElement.querySelector('.detail-label').textContent = 'Input Perimeter:';
+                document.getElementById('inputPerimeter').textContent = `${inputValue.toFixed(1)} mm`;
+                document.getElementById('perimeterRangeRow').style.display = 'flex';
+            } else {
+                document.getElementById('inputPerimeter').parentElement.querySelector('.detail-label').textContent = 'Input Area:';
+                document.getElementById('inputPerimeter').textContent = `${inputValue.toFixed(0)} mm²`;
+                document.getElementById('perimeterRangeRow').style.display = 'none';
+            }
+            
             document.getElementById('derivedDiameter').textContent = `${derivedDiameter.toFixed(1)} mm`;
             
             // Update recommended valve details
@@ -490,24 +580,41 @@
                 document.getElementById('detailsTitle').textContent = `${valveName} ${valve.size} mm`;
                 document.getElementById('annulusRange').textContent = 
                     `${valveData.minDiameter}-${valveData.maxDiameter} mm`;
-                document.getElementById('perimeterRange').textContent = 
-                    `${valveData.minPerimeter.toFixed(1)}-${valveData.maxPerimeter.toFixed(1)} mm`;
+                
+                // Show perimeter range only for perimeter-based valves
+                if (measurementType === 'perimeter') {
+                    document.getElementById('perimeterRange').textContent = 
+                        `${valveData.minPerimeter.toFixed(1)}-${valveData.maxPerimeter.toFixed(1)} mm`;
+                } else {
+                    // For SAPIEN, show area range
+                    const areaRangeRow = document.getElementById('perimeterRangeRow');
+                    areaRangeRow.style.display = 'flex';
+                    areaRangeRow.querySelector('.detail-label').textContent = 'Area Range:';
+                    document.getElementById('perimeterRange').textContent = 
+                        `${valveData.minArea}-${valveData.maxArea} mm²`;
+                }
+                
                 document.getElementById('recommendedOversizing').textContent = 
                     `${valve.minOversizing.toFixed(1)}-${valve.maxOversizing.toFixed(1)}%`;
-                document.getElementById('sovDiameter').textContent = 
-                    `≥${valveData.sovDiameter} mm`;
                 
                 // Conditional fields based on valve type
                 if (isNavitor) {
                     // Navitor-specific fields
+                    document.getElementById('sovDiameter').textContent = 
+                        `≥${valveData.sovDiameter} mm`;
                     if (valveData.minAscAorta && valveData.maxAscAorta) {
                         document.getElementById('ascAorta').textContent = 
                             `${valveData.minAscAorta}-${valveData.maxAscAorta} mm`;
                     } else {
                         document.getElementById('ascAorta').textContent = 'Not specified';
                     }
+                } else if (isSapien) {
+                    // SAPIEN - no specific SOV/coronary height requirements published in same format
+                    // Just show the sizing information
                 } else {
                     // Evolut-specific fields
+                    document.getElementById('sovDiameter').textContent = 
+                        `≥${valveData.sovDiameter} mm`;
                     document.getElementById('sovHeight').textContent = 
                         `≥${valveData.sovHeight} mm`;
                     document.getElementById('postdilCompliant').textContent = 
@@ -520,11 +627,14 @@
                 document.getElementById('annulusRange').textContent = '-';
                 document.getElementById('perimeterRange').textContent = '-';
                 document.getElementById('recommendedOversizing').textContent = 'No valve in recommended range';
-                document.getElementById('sovDiameter').textContent = '-';
+                
+                if (!isSapien) {
+                    document.getElementById('sovDiameter').textContent = '-';
+                }
                 
                 if (isNavitor) {
                     document.getElementById('ascAorta').textContent = '-';
-                } else {
+                } else if (!isSapien) {
                     document.getElementById('sovHeight').textContent = '-';
                     document.getElementById('postdilCompliant').textContent = '-';
                     document.getElementById('postdilNonCompliant').textContent = '-';
@@ -568,20 +678,32 @@
             const valveType = document.getElementById('valveType').value;
             const tableContent = document.getElementById('referenceTableContent');
             const isNavitor = valveType === 'navitor';
+            const isSapien = valveType === 'sapien';
             
             let html = `
                 <thead>
                     <tr>
                         <th>Valve Size</th>
-                        <th>Annulus Diameter</th>
-                        <th>Perimeter</th>
-                        <th>Oversizing Range</th>
-                        <th>SOV Diameter</th>`;
+                        <th>Annulus Diameter</th>`;
             
-            if (isNavitor) {
-                html += `<th>Ascending Aorta</th>`;
+            if (isSapien) {
+                html += `<th>Annular Area</th>`;
+            } else {
+                html += `<th>Perimeter</th>`;
+            }
+            
+            html += `<th>Oversizing Range</th>`;
+            
+            if (isSapien) {
+                // SAPIEN doesn't have the same detailed anatomical requirements
+                // published in IFU like Evolut/Navitor
+            } else if (isNavitor) {
+                html += `
+                        <th>SOV Diameter</th>
+                        <th>Ascending Aorta</th>`;
             } else {
                 html += `
+                        <th>SOV Diameter</th>
                         <th>SOV Height</th>
                         <th>Max Balloon (C/SC)</th>
                         <th>Max Balloon (NC)</th>`;
@@ -600,12 +722,20 @@
                 html += `
                     <tr>
                         <td><strong>${valve.size} mm</strong></td>
-                        <td>${valve.minDiameter}-${valve.maxDiameter} mm</td>
-                        <td>${valve.minPerimeter.toFixed(1)}-${valve.maxPerimeter.toFixed(1)} mm</td>
-                        <td>${minOversizing.toFixed(1)}-${maxOversizing.toFixed(1)}%</td>
-                        <td>≥${valve.sovDiameter} mm</td>`;
+                        <td>${valve.minDiameter}-${valve.maxDiameter} mm</td>`;
                 
-                if (isNavitor) {
+                if (isSapien) {
+                    html += `<td>${valve.minArea}-${valve.maxArea} mm²</td>`;
+                } else {
+                    html += `<td>${valve.minPerimeter.toFixed(1)}-${valve.maxPerimeter.toFixed(1)} mm</td>`;
+                }
+                
+                html += `<td>${minOversizing.toFixed(1)}-${maxOversizing.toFixed(1)}%</td>`;
+                
+                if (isSapien) {
+                    // No additional columns for SAPIEN
+                } else if (isNavitor) {
+                    html += `<td>≥${valve.sovDiameter} mm</td>`;
                     if (valve.minAscAorta && valve.maxAscAorta) {
                         html += `<td>${valve.minAscAorta}-${valve.maxAscAorta} mm</td>`;
                     } else {
@@ -613,6 +743,7 @@
                     }
                 } else {
                     html += `
+                        <td>≥${valve.sovDiameter} mm</td>
                         <td>≥${valve.sovHeight} mm</td>
                         <td>${valve.maxBalloonCompliant} mm</td>
                         <td>${valve.maxBalloonNonCompliant} mm</td>`;

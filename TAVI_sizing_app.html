@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolut TAVR Sizing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px 20px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+        
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .results-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .valve-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .valve-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .valve-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 15px;
+        }
+        
+        .valve-table tr.recommended {
+            background: #e8f5e9;
+            font-weight: 600;
+        }
+        
+        .valve-table tr.recommended td:first-child {
+            color: #2e7d32;
+        }
+        
+        .valve-size {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .oversizing {
+            color: #666;
+        }
+        
+        .details {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .details-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .detail-label {
+            color: #666;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .disclaimer {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            font-size: 12px;
+            color: #856404;
+            border-radius: 5px;
+        }
+        
+        .reference-section {
+            margin-top: 20px;
+        }
+        
+        .reference-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .reference-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .reference-table-container {
+            margin-top: 15px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        
+        .reference-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .reference-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .reference-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+            color: #333;
+        }
+        
+        .reference-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .reference-table tbody tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            font-size: 12px;
+            color: white;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Evolut TAVR Sizing</h1>
+            <p>Self-Expanding Valve Calculator</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <label for="perimeter">Annular Perimeter (mm)</label>
+                <input type="number" id="perimeter" placeholder="Enter perimeter..." step="0.1" min="50" max="100">
+                <button class="calculate-btn" onclick="calculate()">Calculate Sizing</button>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="results-header">Valve Sizing Results</div>
+                
+                <table class="valve-table">
+                    <thead>
+                        <tr>
+                            <th>Valve Size</th>
+                            <th>% Oversizing</th>
+                        </tr>
+                    </thead>
+                    <tbody id="valveTableBody">
+                    </tbody>
+                </table>
+                
+                <div class="details">
+                    <div class="details-title" id="detailsTitle">Evolut FX+ Sizing Details</div>
+                    <div class="detail-row">
+                        <span class="detail-label">Input Perimeter:</span>
+                        <span class="detail-value" id="inputPerimeter">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Perimeter-Derived Diameter:</span>
+                        <span class="detail-value" id="derivedDiameter">-</span>
+                    </div>
+                    <div class="detail-row" id="annulusRangeRow">
+                        <span class="detail-label">Annulus Range:</span>
+                        <span class="detail-value" id="annulusRange">-</span>
+                    </div>
+                    <div class="detail-row" id="perimeterRangeRow">
+                        <span class="detail-label">Perimeter Range:</span>
+                        <span class="detail-value" id="perimeterRange">-</span>
+                    </div>
+                    <div class="detail-row" id="recommendedOversizingRow">
+                        <span class="detail-label">Recommended Oversizing:</span>
+                        <span class="detail-value" id="recommendedOversizing">-</span>
+                    </div>
+                    <div class="detail-row" id="sovDiameterRow">
+                        <span class="detail-label">SOV Diameter (mean):</span>
+                        <span class="detail-value" id="sovDiameter">-</span>
+                    </div>
+                    <div class="detail-row" id="sovHeightRow">
+                        <span class="detail-label">SOV Height (mean):</span>
+                        <span class="detail-value" id="sovHeight">-</span>
+                    </div>
+                    <div class="detail-row" id="postdilCompliantRow" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                        <span class="detail-label">Post-Dilatation Balloon Max Size (C/SC):</span>
+                        <span class="detail-value" id="postdilCompliant">-</span>
+                    </div>
+                    <div class="detail-row" id="postdilNonCompliantRow">
+                        <span class="detail-label">Post-Dilatation Balloon Max Size (NC):</span>
+                        <span class="detail-value" id="postdilNonCompliant">-</span>
+                    </div>
+                </div>
+                
+                <div class="disclaimer">
+                    <strong>⚠️ Reference Tool Only</strong><br>
+                    This calculator is for reference purposes only and should not replace clinical judgment, manufacturer IFU guidelines, or heart team discussion. Always verify sizing with official Medtronic resources.
+                </div>
+                
+                <div class="reference-section">
+                    <button class="reference-btn" onclick="toggleReference()">
+                        <span id="referenceToggleText">Show Complete Sizing Reference</span>
+                    </button>
+                    
+                    <div class="reference-table-container" id="referenceTable" style="display: none;">
+                        <h3 style="margin-bottom: 15px; color: #333;">Evolut FX+ Complete Sizing Reference</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="reference-table">
+                                <thead>
+                                    <tr>
+                                        <th>Valve Size</th>
+                                        <th>Annulus Diameter</th>
+                                        <th>Perimeter</th>
+                                        <th>Oversizing Range</th>
+                                        <th>SOV Diameter</th>
+                                        <th>SOV Height</th>
+                                        <th>Max Balloon (C/SC)</th>
+                                        <th>Max Balloon (NC)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>23 mm</strong></td>
+                                        <td>18-20 mm</td>
+                                        <td>56.5-62.8 mm</td>
+                                        <td>15.0-27.8%</td>
+                                        <td>≥25 mm</td>
+                                        <td>≥15 mm</td>
+                                        <td>20 mm</td>
+                                        <td>19 mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>26 mm</strong></td>
+                                        <td>20-23 mm</td>
+                                        <td>62.8-72.3 mm</td>
+                                        <td>13.0-30.0%</td>
+                                        <td>≥27 mm</td>
+                                        <td>≥15 mm</td>
+                                        <td>26 mm</td>
+                                        <td>25 mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>29 mm</strong></td>
+                                        <td>23-26 mm</td>
+                                        <td>72.3-81.7 mm</td>
+                                        <td>11.5-26.1%</td>
+                                        <td>≥29 mm</td>
+                                        <td>≥15 mm</td>
+                                        <td>25 mm</td>
+                                        <td>23 mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>34 mm</strong></td>
+                                        <td>26-30 mm</td>
+                                        <td>81.7-94.2 mm</td>
+                                        <td>13.3-30.8%</td>
+                                        <td>≥31 mm</td>
+                                        <td>≥16 mm</td>
+                                        <td>28 mm</td>
+                                        <td>25 mm</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        TAVR Sizing Calculator • Evolut Platform<br>
+        Not for medical decision making
+    </div>
+    
+    <script>
+        // Evolut platform sizing data (official from Medtronic IFU)
+        const valveSizes = [
+            { size: 23, minPerimeter: 56.5, maxPerimeter: 62.8, minDiameter: 18, maxDiameter: 20, sovDiameter: 25, sovHeight: 15, maxBalloonCompliant: 20, maxBalloonNonCompliant: 19 },
+            { size: 26, minPerimeter: 62.8, maxPerimeter: 72.3, minDiameter: 20, maxDiameter: 23, sovDiameter: 27, sovHeight: 15, maxBalloonCompliant: 23, maxBalloonNonCompliant: 22 },
+            { size: 29, minPerimeter: 72.3, maxPerimeter: 81.7, minDiameter: 23, maxDiameter: 26, sovDiameter: 29, sovHeight: 15, maxBalloonCompliant: 25, maxBalloonNonCompliant: 23 },
+            { size: 34, minPerimeter: 81.7, maxPerimeter: 94.2, minDiameter: 26, maxDiameter: 30, sovDiameter: 31, sovHeight: 16, maxBalloonCompliant: 28, maxBalloonNonCompliant: 25 }
+        ];
+        
+        function calculate() {
+            const perimeter = parseFloat(document.getElementById('perimeter').value);
+            
+            if (!perimeter || perimeter < 50 || perimeter > 100) {
+                alert('Please enter a valid perimeter between 50 and 100 mm');
+                return;
+            }
+            
+            // Calculate derived diameter and round to 1 decimal for consistency
+            const derivedDiameter = Math.round((perimeter / Math.PI) * 10) / 10;
+            
+            // Calculate oversizing for each valve (diameter-based)
+            const results = valveSizes.map(valve => {
+                const oversizing = ((valve.size - derivedDiameter) / derivedDiameter) * 100;
+                const isRecommended = perimeter >= valve.minPerimeter && perimeter <= valve.maxPerimeter;
+                
+                // Calculate target oversizing range for this valve
+                const minOversizing = ((valve.size - valve.maxDiameter) / valve.maxDiameter) * 100;
+                const maxOversizing = ((valve.size - valve.minDiameter) / valve.minDiameter) * 100;
+                
+                return {
+                    size: valve.size,
+                    oversizing: oversizing,
+                    minOversizing: minOversizing,
+                    maxOversizing: maxOversizing,
+                    isRecommended: isRecommended
+                };
+            });
+            
+            // Display results
+            displayResults(results, perimeter, derivedDiameter);
+        }
+        
+        function displayResults(results, perimeter, derivedDiameter) {
+            const tbody = document.getElementById('valveTableBody');
+            tbody.innerHTML = '';
+            
+            // Find recommended valve(s)
+            const recommendedValves = results.filter(r => r.isRecommended);
+            
+            results.forEach(result => {
+                const row = document.createElement('tr');
+                if (result.isRecommended) {
+                    row.classList.add('recommended');
+                }
+                
+                row.innerHTML = `
+                    <td class="valve-size">${result.size}.0 mm</td>
+                    <td class="oversizing">${result.oversizing.toFixed(1)}%</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Update details
+            document.getElementById('inputPerimeter').textContent = `${perimeter.toFixed(1)} mm`;
+            document.getElementById('derivedDiameter').textContent = `${derivedDiameter.toFixed(1)} mm`;
+            
+            // Update recommended valve details
+            if (recommendedValves.length > 0) {
+                // Show range for first recommended valve (typically only one)
+                const valve = recommendedValves[0];
+                const valveData = valveSizes.find(v => v.size === valve.size);
+                
+                document.getElementById('detailsTitle').textContent = `Evolut FX+ ${valve.size} mm`;
+                document.getElementById('annulusRange').textContent = 
+                    `${valveData.minDiameter}-${valveData.maxDiameter} mm`;
+                document.getElementById('perimeterRange').textContent = 
+                    `${valveData.minPerimeter.toFixed(1)}-${valveData.maxPerimeter.toFixed(1)} mm`;
+                document.getElementById('recommendedOversizing').textContent = 
+                    `${valve.minOversizing.toFixed(1)}-${valve.maxOversizing.toFixed(1)}%`;
+                document.getElementById('sovDiameter').textContent = 
+                    `≥${valveData.sovDiameter} mm`;
+                document.getElementById('sovHeight').textContent = 
+                    `≥${valveData.sovHeight} mm`;
+                document.getElementById('postdilCompliant').textContent = 
+                    `${valveData.maxBalloonCompliant} mm`;
+                document.getElementById('postdilNonCompliant').textContent = 
+                    `${valveData.maxBalloonNonCompliant} mm`;
+            } else {
+                document.getElementById('detailsTitle').textContent = 'Evolut FX+ Sizing Details';
+                document.getElementById('annulusRange').textContent = '-';
+                document.getElementById('perimeterRange').textContent = '-';
+                document.getElementById('recommendedOversizing').textContent = 'No valve in recommended range';
+                document.getElementById('sovDiameter').textContent = '-';
+                document.getElementById('sovHeight').textContent = '-';
+                document.getElementById('postdilCompliant').textContent = '-';
+                document.getElementById('postdilNonCompliant').textContent = '-';
+            }
+            
+            // Show results
+            document.getElementById('results').classList.add('show');
+            
+            // Smooth scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // Allow Enter key to calculate
+        document.getElementById('perimeter').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                calculate();
+            }
+        });
+        
+        // Toggle reference table visibility
+        function toggleReference() {
+            const table = document.getElementById('referenceTable');
+            const toggleText = document.getElementById('referenceToggleText');
+            
+            if (table.style.display === 'none') {
+                table.style.display = 'block';
+                toggleText.textContent = 'Hide Complete Sizing Reference';
+            } else {
+                table.style.display = 'none';
+                toggleText.textContent = 'Show Complete Sizing Reference';
+            }
+        }
+    </script>
+</body>
+</html>
